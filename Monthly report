@@ -1,12 +1,9 @@
+import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 
 # Function to generate the report
-def generate_monthly_report(system_performance_file, incident_log_file, report_file):
-    # Load data from CSV files
-    performance_data = pd.read_csv(system_performance_file)
-    incident_data = pd.read_csv(incident_log_file)
-
+def generate_monthly_report(performance_data, incident_data):
     # Ensure the date columns are in datetime format
     performance_data['Date'] = pd.to_datetime(performance_data['Date'])
     incident_data['Date'] = pd.to_datetime(incident_data['Date'])
@@ -32,21 +29,28 @@ def generate_monthly_report(system_performance_file, incident_log_file, report_f
         Avg_Response_Time=('Response_Time', 'mean')
     ).reset_index()
 
-    # Generate the report
-    with open(report_file, 'w') as f:
-        f.write(f"IT Monthly Report for {first_day_of_month.strftime('%B %Y')}\n\n")
-        
-        f.write("System Performance Summary:\n")
-        f.write(performance_summary.to_string(index=False))
-        f.write("\n\n")
-        
-        f.write("Incident Summary:\n")
-        f.write(incident_summary.to_string(index=False))
+    return performance_summary, incident_summary
 
-# File paths
-system_performance_file = 'system_performance.csv'
-incident_log_file = 'incident_log.csv'
-report_file = 'monthly_report.txt'
+# Streamlit app
+st.title('IT Monthly Report Generator')
 
-# Generate the report
-generate_monthly_report(system_performance_file, incident_log_file, report_file)
+# Upload CSV files
+performance_file = st.file_uploader("Upload System Performance Data (CSV)", type="csv")
+incident_file = st.file_uploader("Upload Incident Log Data (CSV)", type="csv")
+
+if performance_file and incident_file:
+    # Load data
+    performance_data = pd.read_csv(performance_file)
+    incident_data = pd.read_csv(incident_file)
+    
+    # Generate report
+    performance_summary, incident_summary = generate_monthly_report(performance_data, incident_data)
+    
+    # Display the results
+    st.subheader('System Performance Summary')
+    st.write(performance_summary)
+    
+    st.subheader('Incident Summary')
+    st.write(incident_summary)
+else:
+    st.info('Please upload both CSV files to generate the report.')
